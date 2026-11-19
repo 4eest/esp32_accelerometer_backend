@@ -8,6 +8,15 @@
 void setup() {
   Serial.begin(115200);
   Wire.begin(21, 22);
+  
+  // call chip 
+  Wire.beginTransmission(0x75);  
+  Wire.write(0x68);              
+  Wire.endTransmission(false);    
+  
+  Wire.requestFrom(0x68, 1);   
+  uint8_t id = Wire.read();       
+
 
 }
 
