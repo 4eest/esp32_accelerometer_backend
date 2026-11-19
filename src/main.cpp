@@ -7,23 +7,23 @@ void setup() {
   Serial.begin(115200);
   Wire.begin(21, 22);
   
-   // call chip 
+    // call chip and ask for the ID register
   Wire.beginTransmission(0x68);
   Wire.write(0x75);
-  Wire.endTransmission(false);   
+  Wire.endTransmission(false);
 
-  uint8_t result = Wire.requestFrom(0x68, 1);
+  // get the byte back
+  Wire.requestFrom(0x68, 1);
+  uint8_t check = Wire.read();
 
-   if (result != 1) {
-    // nobody answered, so don't bother reading
+  if (check == 0xFF || check == 0x00) {
+    // 0xFF or 0x00 means nobody answered
     Serial.println("sensor not found, check wiring");
   } else {
-    // chip answered, so read the byte back
-    uint8_t check = Wire.read();
+    // real answer, print it (should be 68)
     Serial.print("check: 0x");
     Serial.println(check, HEX);
   }
-
 }
 
 void loop() {
