@@ -48,14 +48,15 @@ void wakeSensor() {
   Wire.endTransmission();
 }
 
-// reads x, y, z in g
-void readAccel() {
-  // read 6 bytes starting at 0x3B, turn them into g
+// reads accel (g) and gyro (degrees per second)
+void readSensor() {
+  // read 14 bytes starting at 0x3B: accel (6), temp (2), gyro (6)
   Wire.beginTransmission(0x68);
   Wire.write(0x3B);
   Wire.endTransmission(false);
-  Wire.requestFrom(0x68, 6);
+  Wire.requestFrom(0x68, 14);
 
+  // ---- accel ----
   uint8_t xFirst  = Wire.read();
   uint8_t xSecond = Wire.read();
   int16_t xWhole  = (xFirst << 8) | xSecond;
@@ -68,9 +69,31 @@ void readAccel() {
   uint8_t zSecond = Wire.read();
   int16_t zWhole  = (zFirst << 8) | zSecond;
 
-  data.ax = xWhole / 16384.0;
+  // ---- temperature, skip it ----
+  Wire.read();
+  Wire.read();
+
+  // ---- gyro ----
+  uint8_t gxFirst  = Wire.read();
+  uint8_t gxSecond = Wire.read();
+  int16_t gxWhole  = (gxFirst << 8) | gxSecond;
+
+  uint8_t gyFirst  = Wire.read();
+  uint8_t gySecond = Wire.read();
+  int16_t gyWhole  = (gyFirst << 8) | gySecond;
+
+  uint8_t gzFirst  = Wire.read();
+  uint8_t gzSecond = Wire.read();
+  int16_t gzWhole  = (gzFirst << 8) | gzSecond;
+
+  // ---- convert ----
+  data.ax = xWhole / 16384.0;   // 16384 counts per g at +/-2g
   data.ay = yWhole / 16384.0;
   data.az = zWhole / 16384.0;
+
+  data.gx = gxWhole / 131.0;    // 131 counts per deg/s at +/-250 deg/s
+  data.gy = gyWhole / 131.0;
+  data.gz = gzWhole / 131.0;
 }
 
 
@@ -87,13 +110,7 @@ void setup() {
 }
 
 void loop() {
-  readAccel();
+  readSensor();
 
-  Serial.print(data.ax);
-  Serial.print(", ");
-  Serial.print(data.ay);
-  Serial.print(", ");
-  Serial.println(data.az);
-
-  delay(500);
-}
+  // accel in g
+  Serial.print("accel:
