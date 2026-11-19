@@ -1,9 +1,7 @@
 #include <Wire.h>
 #include <Arduino.h>
 
-#define SDA_PIN 21
-#define SCL_PIN 22
-#define MPU_ADDR 0x68
+
 
 void setup() {
   Serial.begin(115200);
@@ -13,9 +11,16 @@ void setup() {
   Wire.beginTransmission(0x75);
   Wire.write(0x68);
   Wire.endTransmission(false);    
+
+   if (result != 0) {
+    // nobody answered, so don't bother reading
+    Serial.println("sensor not found, check wiring");
+  } else {
+    // chip answered, so read the byte back
+    Wire.requestFrom(0x68, 1);
+    uint8_t check = Wire.read();
+  }
   
-  Wire.requestFrom(0x68, 1);   
-  uint8_t check = Wire.read();      
   
   Serial.print("check: 0x");
   Serial.println(check, HEX);
