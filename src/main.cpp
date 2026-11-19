@@ -10,7 +10,9 @@ void setup() {
   // call chip 
   Wire.beginTransmission(0x75);
   Wire.write(0x68);
-  Wire.endTransmission(false);    
+  Wire.endTransmission(false);   
+
+  uint8_t gotBytes = Wire.requestFrom(0x68, 1);
 
    if (result != 0) {
     // nobody answered, so don't bother reading
