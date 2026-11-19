@@ -8,8 +8,8 @@ void setup() {
   Wire.begin(21, 22);
   
   // call chip 
-  Wire.beginTransmission(0x75);
-  Wire.write(0x68);
+  Wire.beginTransmission(0x68);
+  Wire.write(0x75);
   Wire.endTransmission(false);   
 
   uint8_t gotBytes = Wire.requestFrom(0x68, 1);
