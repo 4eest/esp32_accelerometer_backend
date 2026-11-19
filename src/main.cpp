@@ -10,12 +10,15 @@ void setup() {
   Wire.begin(21, 22);
   
   // call chip 
-  Wire.beginTransmission(0x75);  
-  Wire.write(0x68);              
+  Wire.beginTransmission(0x75);
+  Wire.write(0x68);
   Wire.endTransmission(false);    
   
   Wire.requestFrom(0x68, 1);   
-  uint8_t id = Wire.read();       
+  uint8_t check = Wire.read();      
+  
+  Serial.print("check: 0x");
+  Serial.println(check, HEX);
 
 
 }
