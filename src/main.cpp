@@ -56,7 +56,7 @@ void readSensor() {
   Wire.endTransmission(false);
   Wire.requestFrom(0x68, 14);
 
-  // ---- accel ----
+  // accel 
   uint8_t xFirst  = Wire.read();
   uint8_t xSecond = Wire.read();
   int16_t xWhole  = (xFirst << 8) | xSecond;
@@ -69,11 +69,11 @@ void readSensor() {
   uint8_t zSecond = Wire.read();
   int16_t zWhole  = (zFirst << 8) | zSecond;
 
-  // ---- temperature, skip it ----
+  // temperature, skip it 
   Wire.read();
   Wire.read();
 
-  // ---- gyro ----
+  //  gyro 
   uint8_t gxFirst  = Wire.read();
   uint8_t gxSecond = Wire.read();
   int16_t gxWhole  = (gxFirst << 8) | gxSecond;
@@ -113,4 +113,20 @@ void loop() {
   readSensor();
 
   // accel in g
-  Serial.print("accel:
+  Serial.print("accel: ");
+  Serial.print(data.ax);
+  Serial.print(", ");
+  Serial.print(data.ay);
+  Serial.print(", ");
+  Serial.print(data.az);
+
+  // gyro in degrees per second
+  Serial.print("   gyro: ");
+  Serial.print(data.gx);
+  Serial.print(", ");
+  Serial.print(data.gy);
+  Serial.print(", ");
+  Serial.println(data.gz);
+
+  delay(500);
+}
