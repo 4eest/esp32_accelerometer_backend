@@ -1,18 +1,17 @@
+#include <Wire.h>
 #include <Arduino.h>
 
-// put function declarations here:
-int myFunction(int, int);
+#define SDA_PIN 21
+#define SCL_PIN 22
+#define MPU_ADDR 0x68
 
 void setup() {
-  // put your setup code here, to run once:
-  int result = myFunction(2, 3);
+  Serial.begin(115200);
+  Wire.begin(21, 22);
+
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-}
-
-// put function definitions here:
-int myFunction(int x, int y) {
-  return x + y;
+  Serial.println("hello");
+  delay(1000);
 }
