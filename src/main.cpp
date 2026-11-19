@@ -5,7 +5,9 @@
 
 void setup() {
   Serial.begin(115200);
+  delay(1000);
   Wire.begin(21, 22);
+  Serial.println("hello");
   
     // call chip and ask for the ID register
   Wire.beginTransmission(0x68);
@@ -27,6 +29,5 @@ void setup() {
 }
 
 void loop() {
-  Serial.println("hello");
-  break;
+ 
 }
