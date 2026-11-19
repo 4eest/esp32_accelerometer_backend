@@ -1,66 +1,99 @@
-#include <Arduino.h>
 #include <Wire.h>
+#include <Arduino.h>
 
-#define SDA_PIN 21
-#define SCL_PIN 22
-#define MPU_ADDR 0x68
-#define ID_REG 0x75   // WHO_AM_I in the datasheet
 
-// read one byte from a register, returns 0xFF if nobody answered
-uint8_t readReg(uint8_t reg) {
-  Wire.beginTransmission(MPU_ADDR);
-  Wire.write(reg);
-  // plain endTransmission() really sends on ESP32, so this check is trustworthy
-  if (Wire.endTransmission() != 0) {
-    return 0xFF;
+// data we send to the wifi side
+struct sensorData {
+  float ax;   // accel in g
+  float ay;
+  float az;
+  float gx;   // gyro in degrees per second
+  float gy;
+  float gz;
+};
+
+sensorData data;   // the latest reading, any function can use it
+
+
+
+// checks the sensor is there, returns true if found
+bool checkSensor() {
+  // call chip and ask for the ID register
+  Wire.beginTransmission(0x68);
+  Wire.write(0x75);
+  Wire.endTransmission(false);
+
+  // get the byte back
+  Wire.requestFrom(0x68, 1);
+  uint8_t check = Wire.read();
+
+  if (check == 0xFF || check == 0x00) {
+    // 0xFF or 0x00 means nobody answered
+    Serial.println("sensor not found, check wiring");
+    return false;
+  } else {
+    // real answer, print it (should be 68)
+    Serial.print("check: 0x");
+    Serial.println(check, HEX);
+    return true;
   }
-  Wire.requestFrom(MPU_ADDR, 1);
-  return Wire.read();
 }
+
+// wakes the chip up (it starts asleep)
+void wakeSensor() {
+  // write 0x00 to register 0x6B
+  Wire.beginTransmission(0x68);
+  Wire.write(0x6B);
+  Wire.write(0x00);
+  Wire.endTransmission();
+}
+
+// reads x, y, z in g
+void readAccel() {
+  // read 6 bytes starting at 0x3B, turn them into g
+  Wire.beginTransmission(0x68);
+  Wire.write(0x3B);
+  Wire.endTransmission(false);
+  Wire.requestFrom(0x68, 6);
+
+  uint8_t xFirst  = Wire.read();
+  uint8_t xSecond = Wire.read();
+  int16_t xWhole  = (xFirst << 8) | xSecond;
+
+  uint8_t yFirst  = Wire.read();
+  uint8_t ySecond = Wire.read();
+  int16_t yWhole  = (yFirst << 8) | ySecond;
+
+  uint8_t zFirst  = Wire.read();
+  uint8_t zSecond = Wire.read();
+  int16_t zWhole  = (zFirst << 8) | zSecond;
+
+  data.ax = xWhole / 16384.0;
+  data.ay = yWhole / 16384.0;
+  data.az = zWhole / 16384.0;
+}
+
+
 
 void setup() {
   Serial.begin(115200);
   delay(1000);
-  Wire.begin(SDA_PIN, SCL_PIN);
+  Wire.begin(21, 22);
+  Serial.println("hello");
+
+  if (checkSensor()) {
+    wakeSensor();
+  }
 }
 
 void loop() {
-  Serial.println("========== debug ==========");
+  readAccel();
 
-  // ---- 1. scan every address ----
-  int found = 0;
-  for (uint8_t addr = 1; addr < 127; addr++) {
-    Wire.beginTransmission(addr);
-    if (Wire.endTransmission() == 0) {
-      Serial.print("found device at 0x");
-      Serial.println(addr, HEX);
-      found++;
-    }
-  }
-  if (found == 0) {
-    Serial.println("no devices found");
-  }
+  Serial.print(data.ax);
+  Serial.print(", ");
+  Serial.print(data.ay);
+  Serial.print(", ");
+  Serial.println(data.az);
 
-  // ---- 2. read the ID 3 times ----
-  uint8_t a = readReg(ID_REG);
-  uint8_t b = readReg(ID_REG);
-  uint8_t c = readReg(ID_REG);
-  Serial.print("id reads: 0x"); Serial.print(a, HEX);
-  Serial.print(" 0x");          Serial.print(b, HEX);
-  Serial.print(" 0x");          Serial.println(c, HEX);
-
-  // ---- 3. verdict ----
-  if (found == 0) {
-    Serial.println("VERDICT: nothing on the bus. check wires, 21/22, power, ground");
-  } else if (a != b || b != c) {
-    Serial.println("VERDICT: reads keep changing. loose wire or no shared ground");
-  } else if (a == 0x68) {
-    Serial.println("VERDICT: all good, real MPU6050");
-  } else if (a == 0x70 || a == 0x72 || a == 0x98) {
-    Serial.println("VERDICT: working, clone chip");
-  } else {
-    Serial.println("VERDICT: steady but weird ID. check address (AD0) and wiring");
-  }
-
-  delay(2000);
+  delay(500);
 }
