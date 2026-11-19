@@ -19,11 +19,9 @@ void setup() {
     // chip answered, so read the byte back
     Wire.requestFrom(0x68, 1);
     uint8_t check = Wire.read();
+    Serial.print("check: 0x");
+    Serial.println(check, HEX);
   }
-  
-  
-  Serial.print("check: 0x");
-  Serial.println(check, HEX);
 
 
 }
